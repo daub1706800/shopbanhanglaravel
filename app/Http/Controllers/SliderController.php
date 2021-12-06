@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Http\Controllers;
+use App\Models\Slider;
+use Illuminate\Http\Request;
+use Session;
+use Illuminate\Support\Facades\Redirect;
+use DB;
+session_start();
+
+class SliderController extends Controller
+{
+    public function manage_banner(){
+        $all_slider=Slider::orderBy('slider_id','DESC')->get();
+        return view('admin.slider.list_slider')->with(compact('all_slider'));
+    }
+    public function add_slider(){
+        return view('admin.slider.add_slider');
+    }
+    public function insert_slider(Request $request){
+          $data= $request->all();
+        $get_image= $request->file('slider_image');
+        if($get_image){
+           $get__name_image=$get_image->getClientOriginalName();
+           $name_image=current(explode('.',$get__name_image));
+            $new_image=$name_image.rand(0,99).'.'.$get_image->getClientOriginalExtension();
+            $get_image->move('public/upload/slider',$new_image);
+
+            $slider=new Slider();
+            $slider->slider_name = $data['slider_name'];
+            $slider->slider_image = $new_image;
+            $slider->slider_status = $data['slider_status'];
+            $slider->slider_desc = $data['slider_desc'];
+            $slider->save();
+           Session::put('message','Thêm slider thành công');
+           return redirect('add-slider');
+
+
+        }else{
+            Session::put('message','Làm ơn thêm slider');
+            return redirect('add-slider');
+        }
+
+
+}
+
+public function delete_slider($slider_id){
+    DB::table('tbl_slider')->where('slider_id',$slider_id)->delete();
+    Session::put('message','Xóa slider thành công');
+    return redirect('manage-banner');
+
+  }
+  public function unactive_slider( $slider_id){
+
+    DB::table('tbl_slider')->where('slider_id',$slider_id)->update(['slider_status' => 1]);
+    Session::put('message','Không kích hoạt slider ');
+    return redirect('manage-banner');
+
+}
+public function active_slider( $slider_id){
+
+   DB::table('tbl_slider')->where('slider_id',$slider_id)->update(['slider_status' => 0]);
+   Session::put('message','Kích hoạt slider thành công');
+   return redirect('manage-banner');
+
+}
+}
